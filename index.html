@@ -244,7 +244,7 @@
     async function fetchData() {
         // 使用你的 Sheet ID
         // 注意：這裡我加了 &tq=Select%20* 來確保抓取所有資料
-        const url = `https://docs.google.com/spreadsheets/d/1N4Yj5JTKoeX4cbe4lexap2muaKtTpMwcqPOUjTpbN1Q/gviz/tq?tqx=out:json&tq=Select%20*`;
+        const url = `https://docs.google.com/spreadsheets/d/1N4Yj5JTKoeX4cbe4lexap2muaKtTpMwcqPOUjTpbN1Q/gviz/tq?tqx=out:json&tq=Select%20*&gid=0#gid=0`;
 
         console.log("正在嘗試連線:", url); // 在 Console 顯示網址方便除錯
 
@@ -284,31 +284,6 @@
         }
     }
 
-
-    // async function fetchData() {
-    //     // 指定讀取 "Database" 工作表
-    //     const url = `https://docs.google.com/spreadsheets/d/1N4Yj5JTKoeX4cbe4lexap2muaKtTpMwcqPOUjTpbN1Q/gviz/tq?gid=0#gid=0&tqx=out:json`;
-
-    //     try {
-    //         const res = await fetch(url);
-    //         if (!res.ok) throw new Error("網路請求失敗");
-    //         const text = await res.text();
-            
-    //         // 清理 Google 回傳的 JSON 字串
-    //         const json = JSON.parse(text.substring(47).slice(0, -2));
-            
-    //         if (json.table.rows.length === 0) {
-    //             console.log("目前沒有資料");
-    //             return;
-    //         }
-            
-    //         processData(json.table.rows);
-
-    //     } catch (err) {
-    //         console.error('讀取錯誤:', err);
-    //         alert('無法讀取資料！\n請確認：\n1. SHEET_ID 是否填寫正確\n2. 試算表是否已「發布到網路」\n3. 是否有 "Database" 工作表');
-    //     }
-    // }
 
     // 4. 資料轉換 (Sheet -> Calendar)
     function processData(rows) {
@@ -431,4 +406,5 @@
     }
 </script>
 </body>
+
 </html>
