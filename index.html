@@ -8,135 +8,116 @@
     
     <style>
         :root {
-            --bg-color: #f4f7f6;
-            --sidebar-width: 350px; /* 側邊欄寬度 */
+            --bg-color: #f0f2f5; /* 背景改稍微深一點點，對比更好 */
+            /* 【修改點 3】時間軸寬度改寬 */
+            --sidebar-width: 480px; 
             --transition-speed: 0.3s;
+            --primary-color: #1a73e8;
         }
-        body { margin: 0; padding: 20px; background-color: var(--bg-color); font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; height: 100vh; box-sizing: border-box; overflow: hidden; }
+        body {
+            margin: 0; padding: 20px;
+            background-color: var(--bg-color);
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh; /* 改用 min-height 避免內容被切掉 */
+            box-sizing: border-box;
+        }
         
         /* 頂部標題列 */
-        .header-bar { height: 50px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        h1 { font-size: 1.5rem; color: #333; margin: 0; }
-        
+        .header-bar {
+            max-width: 1200px; margin: 0 auto 20px auto; /* 配合主容器寬度 */
+            height: 50px; display: flex; justify-content: space-between; align-items: center;
+        }
+        h1 { font-size: 1.5rem; color: #333; margin: 0; display: flex; align-items: center; gap: 10px;}
+
         /* 按鈕樣式 */
         .btn-add {
-            background-color: #1a73e8; color: white; padding: 10px 20px;
-            text-decoration: none; border-radius: 25px; font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: 0.2s;
-            display: flex; align-items: center; gap: 5px;
+            background-color: var(--primary-color); color: white; padding: 10px 24px;
+            text-decoration: none; border-radius: 25px; font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: 0.2s;
         }
-        .btn-add:hover { background-color: #1557b0; transform: translateY(-1px); }
+        .btn-add:hover { background-color: #1557b0; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.2);}
 
-        /* 主版面容器 */
+        /* 【修改點 2】主版面容器：調整邊距與大小 */
         .layout-container {
             display: flex;
-            height: calc(100vh - 90px); /* 扣掉標題高度 */
+            /* 設定最大寬度，讓旁邊留白 */
+            max-width: 1200px; 
+            /* 上下留多一點空白，左右自動置中 */
+            margin: 40px auto 60px auto; 
+            /* 固定高度，扣掉上下邊距與標題略抓的高度 */
+            height: 80vh; 
+            min-height: 600px; /* 設定最小高度防止太扁 */
             background: white;
             border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             overflow: hidden;
             position: relative;
+            border: 1px solid #e0e0e0;
         }
 
         /* 左側：行事曆 */
         .calendar-wrapper {
-            flex: 1;
-            transition: all var(--transition-speed) ease;
-            padding: 20px;
-            min-width: 0;
-            overflow: hidden;
+            flex: 1; transition: all var(--transition-speed) ease;
+            padding: 30px; min-width: 0; overflow: hidden;
         }
-        /* 當側邊欄打開時，行事曆縮小 */
         .layout-container.sidebar-active .calendar-wrapper {
             flex: 0 0 calc(100% - var(--sidebar-width));
         }
+        /* FullCalendar 樣式微調 */
+        .fc-toolbar-title { font-size: 1.25rem !important; }
+        .fc-button { border-radius: 8px !important; }
+        .fc-daygrid-event { border-radius: 4px; font-size: 0.85em; padding: 2px 4px;}
+        /* 【修改點 4】被選取的日期標示 */
+        .fc-highlight { background: rgba(255, 251, 0, 0.2) !important; } /* 拖曳選擇時 */
+        .fc-day-selected { background-color: rgba(255, 242, 0, 0.15) !important; transition: 0.2s;} /* 點擊選取時 */
+
 
         /* 右側：時間軸 */
         .timeline-wrapper {
-            width: 0;
-            opacity: 0;
-            background-color: #fafafa;
-            border-left: 1px solid #eee;
-            transition: all var(--transition-speed) ease;
-            display: flex;
-            flex-direction: column;
-            position: relative;
+            width: 0; opacity: 0; background-color: #fff;
+            border-left: 1px solid #eee; transition: all var(--transition-speed) ease;
+            display: flex; flex-direction: column; position: relative;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.05); z-index: 10;
         }
         .layout-container.sidebar-active .timeline-wrapper {
-            width: var(--sidebar-width);
-            opacity: 1;
+            width: var(--sidebar-width); opacity: 1;
         }
-
-        /* 時間軸標頭 */
         .timeline-header {
-            padding: 15px 20px;
-            background: #fff;
-            border-bottom: 1px solid #eee;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 60px;
-            box-sizing: border-box;
-            font-size: 1.1rem;
-            color: #444;
+            padding: 0 20px; background: #fafafa; border-bottom: 1px solid #eee;
+            font-weight: bold; display: flex; justify-content: space-between; align-items: center;
+            height: 60px; flex-shrink: 0; font-size: 1.1rem; color: #444;
         }
-        .close-btn { cursor: pointer; color: #999; padding: 5px; font-size: 1.2rem; transition: 0.2s; }
-        .close-btn:hover { color: #333; }
+        .close-btn { cursor: pointer; color: #999; padding: 8px; font-size: 1.4rem; transition: 0.2s; line-height: 1;}
+        .close-btn:hover { color: #333; background: #eee; border-radius: 50%;}
 
-        /* 時間軸滾動區 */
-        .timeline-scroll-area {
-            flex: 1;
-            overflow-y: auto;
-            position: relative;
-            background: #fafafa;
-        }
-
-        /* 時間刻度 (00:00 - 23:00) */
+        .timeline-scroll-area { flex: 1; overflow-y: auto; position: relative; background: #fff; }
+        /* 時間刻度 */
         .time-slot {
-            height: 60px; /* 每一小時的高度 */
-            border-bottom: 1px solid #e0e0e0;
-            position: relative;
-            box-sizing: border-box;
+            height: 60px; /* 每一小時 60px */
+            border-bottom: 1px solid #f0f0f0; position: relative; box-sizing: border-box;
         }
         .time-slot span {
-            position: absolute;
-            top: -10px;
-            left: 10px;
-            background: #fafafa;
-            padding: 0 5px;
-            color: #888;
-            font-size: 0.75rem;
-            font-family: monospace;
+            position: absolute; top: -10px; left: 15px; background: #fff; padding: 0 5px;
+            color: #999; font-size: 0.75rem; font-family: monospace; font-weight: 500;
+        }
+        /* 時間軸背景格線 */
+        .time-slot::after {
+             content: ''; position: absolute; top: 30px; left: 60px; right: 0;
+             border-bottom: 1px dashed #f5f5f5; height: 0;
         }
 
-        /* 事件區塊 */
+        /* 【修改點 5】事件區塊：支援並排顯示 */
         .timeline-event {
             position: absolute;
-            left: 60px; /* 避開時間文字 */
-            right: 15px;
-            border-radius: 6px;
-            padding: 6px 10px;
-            font-size: 0.85rem;
-            color: white;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-            cursor: pointer;
-            z-index: 10;
-            opacity: 0.95;
-            transition: 0.2s;
-            border-left: 4px solid rgba(0,0,0,0.2); /* 增加質感 */
+            /* left 和 width 改由 JS 動態計算 */
+            border-radius: 6px; padding: 8px 12px;
+            font-size: 0.9rem; color: white; overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.1);
+            cursor: pointer; z-index: 10; opacity: 0.95; transition: all 0.2s ease;
+            border-left: 4px solid rgba(0,0,0,0.15); box-sizing: border-box;
         }
-        .timeline-event:hover {
-            z-index: 20;
-            transform: scale(1.02);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        .timeline-event strong { display: block; margin-bottom: 2px; font-size: 0.95rem; }
-        
-        /* FullCalendar 微調 */
-        .fc-toolbar-title { font-size: 1.25rem !important; }
-        .fc-button { border-radius: 8px !important; font-size: 0.9rem !important; }
+        .timeline-event:hover { z-index: 20; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.2); opacity: 1;}
+        .event-time-label { font-size: 0.75em; opacity: 0.85; margin-top: 4px; display: block;}
     </style>
 </head>
 <body>
@@ -156,7 +137,7 @@
         <div class="timeline-wrapper">
             <div class="timeline-header">
                 <span id="timeline-date-title">請選擇日期</span>
-                <span class="close-btn" onclick="closeTimeline()" title="關閉">✕</span>
+                <span class="close-btn" onclick="closeTimeline()" title="關閉">×</span>
             </div>
             <div class="timeline-scroll-area" id="timeline-grid">
                 </div>
@@ -167,26 +148,22 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/zh-tw.js"></script>
 
 <script>
-    // ================== 設定區 (只差這裡！) ==================
-    
-    // 【重要】請去複製你的 Google Sheet ID 貼在下面
-    // 網址列範例: docs.google.com/spreadsheets/d/【這個就是ID】/edit
-    const SHEET_ID = '請把你的SHEET_ID貼在這裡'; 
+    // ================== 設定區 ==================
+    // 你的 Sheet ID
+    const SHEET_ID = '1N4Yj5JTKoeX4cbe4lexap2muaKtTpMwcqPOUjTpbN1Q'; 
+    // 你的 Database 分頁 GID (如果不是第一頁，請修改這裡)
+    const GID = '0#gid=0'; 
 
-    // 顏色對應 (表單選項 -> 網頁顏色)
     const COLOR_MAP = {
-        '紅色': '#E74C3C',
-        '藍色': '#3498DB',
-        '綠色': '#2ECC71',
-        '橘色': '#F39C12',
-        '紫色': '#9B59B6',
-        '灰色': '#95A5A6',
-        'default': '#34495E' // 預設深藍灰
+        '紅色': '#E74C3C', '藍色': '#3498DB', '綠色': '#2ECC71',
+        '橘色': '#F39C12', '紫色': '#9B59B6', '灰色': '#95A5A6',
+        'default': '#34495E'
     };
-    // ========================================================
+    // ===========================================
 
     let allEvents = [];
     let calendar;
+    let selectedDateEl = null; // 用來記錄目前被選取的日期元素
 
     document.addEventListener('DOMContentLoaded', function() {
         initCalendar();
@@ -194,124 +171,125 @@
         fetchData();
     });
 
-    // 1. 初始化月曆
     function initCalendar() {
         var calendarEl = document.getElementById('calendar');
         calendar = new FullCalendar.Calendar(calendarEl, {
             locale: 'zh-tw',
             initialView: 'dayGridMonth',
             height: '100%',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth'
-            },
-            // 點擊日期 -> 開啟時間軸
+            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
+            selectable: true, // 【修改點 4】允許選取日期
+            // 點擊日期空白處
             dateClick: function(info) {
+                handleDateSelection(info.dayEl); // 處理選取樣式
                 openTimeline(info.dateStr);
             },
-            // 點擊事件 -> 開啟時間軸
+            // 點擊事件色塊
             eventClick: function(info) {
-                // 取得事件的日期 (yyyy-mm-dd)
+                // 找到該事件對應的日期格子
                 const dateStr = info.event.startStr.split('T')[0];
+                const dayEl = calendarEl.querySelector(`td[data-date="${dateStr}"]`);
+                if (dayEl) handleDateSelection(dayEl);
+                
                 openTimeline(dateStr);
             },
             eventDisplay: 'block',
-            eventTimeFormat: { // 月曆上不顯示詳細時間，只顯示色塊與標題，保持乾淨
-                hour: '2-digit',
-                minute: '2-digit',
-                meridiem: false
-            }
+            eventTimeFormat: { hour: '2-digit', minute: '2-digit', meridiem: false }
         });
         calendar.render();
     }
 
-    // 2. 建立右側 0-23 點網格
+    // 【修改點 4】處理日期選取樣式的函式
+    function handleDateSelection(newEl) {
+        // 移除舊的選取樣式
+        if (selectedDateEl) {
+            selectedDateEl.classList.remove('fc-day-selected');
+        }
+        // 加上新的選取樣式
+        if (newEl) {
+            newEl.classList.add('fc-day-selected');
+            selectedDateEl = newEl;
+        }
+    }
+
     function initTimelineGrid() {
         const grid = document.getElementById('timeline-grid');
         grid.innerHTML = '';
         for (let i = 0; i < 24; i++) {
             let div = document.createElement('div');
             div.className = 'time-slot';
-            // 顯示 00:00, 01:00...
-            let timeLabel = i.toString().padStart(2, '0') + ":00";
-            div.innerHTML = `<span>${timeLabel}</span>`;
+            div.innerHTML = `<span>${i.toString().padStart(2, '0')}:00</span>`;
             grid.appendChild(div);
         }
     }
 
-    // 3. 抓取 Google Sheet 資料
     async function fetchData() {
-        // 使用你的 Sheet ID
-        // 注意：這裡我加了 &tq=Select%20* 來確保抓取所有資料
-        const url = `https://docs.google.com/spreadsheets/d/1N4Yj5JTKoeX4cbe4lexap2muaKtTpMwcqPOUjTpbN1Q/gviz/tq?tqx=out:json&tq=Select%20*&gid=0#gid=0`;
-
-        console.log("正在嘗試連線:", url); // 在 Console 顯示網址方便除錯
+        // 使用 GID 確保讀取到 Database 分頁
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&tq=Select%20*&gid=${GID}`;
+        console.log("正在讀取:", url);
 
         try {
             const res = await fetch(url);
-            if (!res.ok) {
-                throw new Error("網路連線回應不正常: " + res.status);
-            }
-            
             const text = await res.text();
-            
-            // --- 關鍵修改開始 ---
-            // 不再用 substring(47) 這種危險寫法
-            // 改用 Regex 直接抓取括號內的 JSON 資料
+            // 使用 Regex 抓取 JSON，避免被前面的 /*O_o*/ 干擾
             const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/);
-            
             if (match && match[1]) {
                 const json = JSON.parse(match[1]);
-                console.log("成功抓取並解析 JSON:", json); // 成功的話會在 Console 顯示資料
-                
-                if (!json.table || !json.table.rows) {
-                    alert("資料庫是空的，或找不到 Database 工作表");
-                    return;
+                if (json.table && json.table.rows.length > 0) {
+                    processData(json.table.rows);
+                    console.log("資料讀取成功，共", json.table.rows.length, "筆");
+                } else {
+                    console.warn("資料庫是空的");
                 }
-                
-                processData(json.table.rows);
-            } else {
-                console.error("無法解析回傳格式:", text);
-                alert("連線成功但解析失敗！請按 F12 打開 Console 截圖給工程師看。");
             }
-            // --- 關鍵修改結束 ---
-
         } catch (err) {
-            console.error("發生錯誤:", err);
-            // 這裡會顯示具體的錯誤原因
-            alert("讀取失敗！詳細錯誤請看 Console (F12)。\n錯誤訊息: " + err.message);
+            console.error('讀取錯誤:', err);
+            alert('資料讀取失敗，請檢查 Console 訊息。');
         }
     }
 
+    // 【修改點 1】全新的時間格式化函式
+    function normalizeGoogleTime(rawTime) {
+        if (!rawTime) return null;
+        const str = rawTime.toString();
+        
+        // 針對 Google Sheet 傳回的 "Date(1899,11,30,6,0,0)" 格式進行解析
+        // 使用 Regex 抓取 Date(y,m,d, 小時, 分鐘, 秒) 中的小時和分鐘
+        const match = str.match(/Date\(\d+,\d+,\d+,(\d+),(\d+)/);
+        
+        if (match) {
+            // match[1] 是小時，match[2] 是分鐘。補零確保是兩位數。
+            let h = match[1].padStart(2, '0');
+            let m = match[2].padStart(2, '0');
+            return `${h}:${m}`;
+        }
+        
+        // 如果不是上述格式，嘗試簡單的 fallback (例如原本就是 "09:00")
+        if (str.includes(':') && str.length <= 5) {
+             return str;
+        }
 
-    // 4. 資料轉換 (Sheet -> Calendar)
+        return null; // 解析失敗
+    }
+
+
     function processData(rows) {
-        // 對應 Apps Script 產生的 Database 欄位順序：
-        // c[0]: Timestamp
-        // c[1]: Title (姓名 - 事件)
-        // c[2]: Date_Start
-        // c[3]: Date_End
-        // c[4]: Time_Start
-        // c[5]: Time_End
-        // c[6]: Color
-
         allEvents = rows.map(row => {
+            // 讀取欄位 (請確保 Database 分頁順序正確)
             const title = (row.c[1]?.v) || '未命名';
             const dateStart = (row.c[2]?.f) || (row.c[2]?.v);
-            // 時間預設值
-            const timeStart = (row.c[4]?.v) || '00:00';
-            const timeEnd = (row.c[5]?.v) || '23:59';
+            // 使用新的函式處理時間
+            const timeStart = normalizeGoogleTime(row.c[4]?.v) || '00:00';
+            const timeEnd = normalizeGoogleTime(row.c[5]?.v) || '23:59';
             const colorName = (row.c[6]?.v) || 'default';
 
             if (!dateStart) return null;
 
             return {
-                title: title,
-                start: `${dateStart}T${timeStart}`, // ISO 格式
+                title: title, // 這裡的 title 會顯示在月曆上
+                start: `${dateStart}T${timeStart}`,
                 end: `${dateStart}T${timeEnd}`,
                 color: COLOR_MAP[colorName] || COLOR_MAP['default'],
-                // 自訂屬性供時間軸使用
                 extendedProps: {
                     dateOnly: dateStart,
                     timeStart: timeStart,
@@ -321,90 +299,120 @@
             };
         }).filter(e => e !== null);
 
-        // 將資料放入月曆
         calendar.removeAllEvents();
         calendar.addEventSource(allEvents);
     }
 
-    // 5. 開啟側邊欄邏輯
     function openTimeline(dateStr) {
         const container = document.getElementById('layoutContainer');
         const dateTitle = document.getElementById('timeline-date-title');
         const grid = document.getElementById('timeline-grid');
 
-        // 更新標題
         dateTitle.textContent = `${dateStr} 行程一覽`;
-        
-        // 觸發 CSS 動畫
         container.classList.add('sidebar-active');
-        
-        // 等動畫跑完再調整月曆大小
         setTimeout(() => { calendar.updateSize(); }, 350);
 
-        // 清除舊的事件塊
-        const oldEvents = grid.querySelectorAll('.timeline-event');
-        oldEvents.forEach(el => el.remove());
+        // 清除舊事件
+        grid.querySelectorAll('.timeline-event').forEach(el => el.remove());
 
-        // 篩選當日事件
-        const dayEvents = allEvents.filter(e => e.extendedProps.dateOnly === dateStr);
+        // 篩選當日事件並排序 (為了計算重疊，必須先排序)
+        const dayEvents = allEvents
+            .filter(e => e.extendedProps.dateOnly === dateStr)
+            .sort((a, b) => a.extendedProps.timeStart.localeCompare(b.extendedProps.timeStart));
 
-        if (dayEvents.length === 0) {
-            // 如果當天沒行程，可以顯示提示 (選擇性)
-        } else {
-            dayEvents.forEach(event => {
-                renderEventOnTimeline(event, grid);
-            });
-        }
+        // 【修改點 5】計算重疊並渲染
+        renderOverlappingEvents(dayEvents, grid);
     }
 
-    // 6. 關閉側邊欄
     window.closeTimeline = function() {
         const container = document.getElementById('layoutContainer');
         container.classList.remove('sidebar-active');
+        // 關閉時也移除日期選取樣式
+        if (selectedDateEl) {
+            selectedDateEl.classList.remove('fc-day-selected');
+            selectedDateEl = null;
+        }
         setTimeout(() => { calendar.updateSize(); }, 350);
     }
 
-    // 7. 渲染時間軸上的色塊 (計算位置與高度)
-    function renderEventOnTimeline(event, container) {
-        // 解析時間 "09:30" -> {h:9, m:30}
-        const parseTime = (t) => {
-            const [h, m] = t.split(':').map(Number);
-            return { h: h || 0, m: m || 0 };
+    // 【修改點 5】新的渲染函式：處理時間重疊並排
+    function renderOverlappingEvents(events, container) {
+        if (events.length === 0) return;
+
+        // 輔助函式：將 "09:30" 轉為分鐘數 (例如 9*60+30 = 570)
+        const getMinutes = (timeStr) => {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
         };
 
-        const start = parseTime(event.extendedProps.timeStart);
-        const end = parseTime(event.extendedProps.timeEnd);
-        
-        const HOUR_HEIGHT = 60; // 必須對應 CSS .time-slot 的 height
-        
-        // 計算 Top (分鐘數 * 每分鐘像素)
-        const top = (start.h * 60 + start.m) * (HOUR_HEIGHT / 60);
-        
-        // 計算 Height
-        let durationMinutes = (end.h * 60 + end.m) - (start.h * 60 + start.m);
-        if (durationMinutes <= 0) durationMinutes = 30; // 最小高度防呆
-        const height = durationMinutes * (HOUR_HEIGHT / 60);
+        // 準備資料：加入分鐘數以便計算
+        const processedEvents = events.map(e => ({
+            ...e,
+            startMin: getMinutes(e.extendedProps.timeStart),
+            endMin: getMinutes(e.extendedProps.timeEnd)
+        }));
 
-        const el = document.createElement('div');
-        el.className = 'timeline-event';
-        el.style.top = top + 'px';
-        el.style.height = height + 'px';
-        el.style.backgroundColor = event.color;
-        
-        el.innerHTML = `
-            <strong>${event.title}</strong>
-            <div style="font-size:0.8em; opacity:0.9">${event.extendedProps.desc}</div>
-        `;
-        
-        // 點擊顯示詳細
-        el.onclick = (e) => {
-            e.stopPropagation(); // 防止觸發關閉
-            alert(`詳細資訊：\n${event.title}\n時間：${event.extendedProps.desc}`);
-        };
+        // 演算法：分組重疊的事件
+        let groups = []; // 存放一組一組重疊的事件
+        if (processedEvents.length > 0) {
+            let currentGroup = [processedEvents[0]];
+            let maxEndTimeInGroup = processedEvents[0].endMin;
 
-        container.appendChild(el);
+            for (let i = 1; i < processedEvents.length; i++) {
+                const currentEvent = processedEvents[i];
+                // 如果當前事件的開始時間 < 目前群組中最晚結束的時間 -> 發生重疊
+                if (currentEvent.startMin < maxEndTimeInGroup) {
+                    currentGroup.push(currentEvent);
+                    // 更新群組中最晚結束的時間
+                    maxEndTimeInGroup = Math.max(maxEndTimeInGroup, currentEvent.endMin);
+                } else {
+                    // 沒有重疊，封存當前群組，開始新群組
+                    groups.push(currentGroup);
+                    currentGroup = [currentEvent];
+                    maxEndTimeInGroup = currentEvent.endMin;
+                }
+            }
+            groups.push(currentGroup); // 加入最後一組
+        }
+
+        // 渲染每一組
+        const HOUR_HEIGHT = 60; // CSS 中設定的每小時高度
+        
+        groups.forEach(group => {
+            const count = group.length; // 這一組有幾個人重疊
+            const width = 100 / count;  // 每個人分到的寬度百分比
+
+            group.forEach((event, index) => {
+                // 計算位置與高度
+                const top = (event.startMin / 60) * HOUR_HEIGHT;
+                let duration = event.endMin - event.startMin;
+                if (duration <= 15) duration = 30; // 最小高度防呆
+                const height = (duration / 60) * HOUR_HEIGHT;
+                const left = index * width; // 計算左邊距位置
+
+                // 建立元素
+                const el = document.createElement('div');
+                el.className = 'timeline-event';
+                // 設定動態計算出的樣式
+                el.style.top = `${top}px`;
+                el.style.height = `${height}px`;
+                el.style.backgroundColor = event.color;
+                el.style.width = `calc(${width}% - 10px)`; // 減一點寬度產生間距
+                el.style.left = `calc(60px + ${left}%)`;   // 60px 是左側時間文字的寬度
+
+                el.innerHTML = `
+                    <strong>${event.title}</strong>
+                    <span class="event-time-label">${event.extendedProps.desc}</span>
+                `;
+
+                el.onclick = (e) => {
+                    e.stopPropagation();
+                    alert(`${event.title}\n時間：${event.extendedProps.desc}`);
+                };
+                container.appendChild(el);
+            });
+        });
     }
 </script>
 </body>
-
 </html>
