@@ -9,8 +9,9 @@
     <style>
         :root {
             --bg-color: #f0f2f5;
-            --sidebar-width: 500px; /* 時間軸寬度 */
-            --calendar-min-width: 900px; /* 行事曆原本的寬度 */
+            --sidebar-width: 500px;
+            /* 【修改 1】行事曆寬度加寬 (原本 900px -> 改為 1100px 或更寬) */
+            --calendar-min-width: 1100px; 
             --transition-speed: 0.4s;
             --primary-color: #1a73e8;
         }
@@ -20,23 +21,20 @@
             font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             min-height: 100vh;
             box-sizing: border-box;
-            overflow-y: auto; /* 允許垂直捲動 */
+            overflow-y: auto;
         }
         
-        /* 1. 頂部標題列修正 */
+        /* 標題列 */
         .header-bar {
-            /* 配合容器動態寬度，設定一個適當的最大值 */
             width: var(--calendar-min-width); 
             margin: 0 auto 20px auto;
             height: 50px; display: flex; justify-content: space-between; align-items: center;
             transition: width var(--transition-speed) ease;
         }
-        /* 當側邊欄打開時，標題列跟著變寬，維持視覺平衡 */
         body.sidebar-open .header-bar {
             width: calc(var(--calendar-min-width) + var(--sidebar-width));
         }
 
-        /* 標題文字修正 */
         h1 { font-size: 1.6rem; color: #333; margin: 0; font-weight: 700;}
 
         .btn-add {
@@ -46,12 +44,11 @@
         }
         .btn-add:hover { background-color: #1557b0; transform: translateY(-1px); }
 
-        /* 2. 主版面容器：寬度動態變化 */
+        /* 主版面容器 */
         .layout-container {
             display: flex;
-            /* 預設寬度 = 行事曆寬度 */
             width: var(--calendar-min-width);
-            margin: 0 auto 60px auto; /* 上下留白，左右自動置中 */
+            margin: 0 auto 60px auto;
             height: 85vh; 
             min-height: 700px;
             background: white;
@@ -60,19 +57,15 @@
             overflow: hidden;
             position: relative;
             border: 1px solid #e0e0e0;
-            /* 關鍵動畫：寬度改變 */
             transition: width var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
-        /* 當側邊欄啟用時的狀態 class */
         .layout-container.sidebar-active {
-            /* 總寬度 = 行事曆 + 時間軸 */
             width: calc(var(--calendar-min-width) + var(--sidebar-width));
         }
 
         /* 左側：行事曆 */
         .calendar-wrapper {
-            /* 固定寬度，不隨父容器變寬而拉伸，也不被擠壓 */
             flex: 0 0 var(--calendar-min-width);
             width: var(--calendar-min-width);
             padding: 30px; 
@@ -81,57 +74,55 @@
             z-index: 5;
         }
         
-        /* FullCalendar UI 微調 */
         .fc-toolbar-title { font-size: 1.5rem !important; font-weight: 600; }
         .fc-button { border-radius: 6px !important; font-weight: 500; }
-        /* 箭頭按鈕間隙 */
         .fc-button-group > .fc-button { margin-right: 5px; } 
         .fc-button-group > .fc-button:last-child { margin-right: 0; }
         
-        .fc-daygrid-event { border-radius: 4px; font-size: 0.9em; padding: 2px 6px; margin-top: 2px; font-weight: 500;}
+        .fc-daygrid-event { 
+            border-radius: 4px; font-size: 0.9em; padding: 2px 6px; margin-top: 2px; font-weight: 500;
+            border: none; /* 移除邊框讓畫面更乾淨 */
+        }
         .fc-day-selected { background-color: rgba(26, 115, 232, 0.08) !important; transition: 0.2s;} 
 
 
-        /* 3. 右側：時間軸 */
+        /* 右側：時間軸 */
         .timeline-wrapper {
-            /* 預設寬度 0 */
-            width: 0; 
-            opacity: 0; 
-            background-color: #fff;
+            width: 0; opacity: 0; background-color: #fff;
             border-left: 1px solid #eee; 
             display: flex; flex-direction: column; position: relative;
-            z-index: 10;
-            overflow: hidden; /* 防止內容溢出 */
-            /* 寬度與透明度動畫 */
+            z-index: 10; overflow: hidden;
             transition: width var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1),
                         opacity var(--transition-speed) ease;
         }
 
         .layout-container.sidebar-active .timeline-wrapper {
-            width: var(--sidebar-width); 
-            opacity: 1;
+            width: var(--sidebar-width); opacity: 1;
         }
 
         .timeline-header {
             padding: 0 25px; background: #fafafa; border-bottom: 1px solid #eee;
             font-weight: bold; display: flex; justify-content: space-between; align-items: center;
+            /* 【修改 2】增加下方 margin，讓 00:00 不要貼太近 */
             height: 70px; flex-shrink: 0; font-size: 1.2rem; color: #444;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03); z-index: 20;
         }
         .close-btn { cursor: pointer; color: #999; padding: 10px; font-size: 1.5rem; line-height: 1; border-radius: 50%;}
         .close-btn:hover { background: #e0e0e0; color: #333; }
 
-        /* 移除橫向卷軸 */
         .timeline-scroll-area { 
             flex: 1; 
             overflow-y: auto; 
-            overflow-x: hidden; /* 關鍵：隱藏水平卷軸 */
+            overflow-x: hidden;
             position: relative; 
             background: #fff; 
+            /* 【修改 3】增加上下 padding，解決 00:00 被切掉的問題 */
+            padding: 20px 0; 
         }
 
         .time-slot {
-            height: 60px; /* 每小時高度 */
-            border-bottom: 1px solid #f5f5f5; position: relative; box-sizing: border-box;
+            height: 60px; 
+            border-bottom: 1px solid #f9f9f9; position: relative; box-sizing: border-box;
         }
         .time-slot span {
             position: absolute; top: -10px; left: 15px; background: #fff; padding: 0 5px;
@@ -139,17 +130,16 @@
         }
         .time-slot::after {
              content: ''; position: absolute; top: 30px; left: 60px; right: 0;
-             border-bottom: 1px dashed #f9f9f9; height: 0;
+             border-bottom: 1px dashed #fcfcfc; height: 0;
         }
 
         .timeline-event {
             position: absolute;
-            border-radius: 6px; padding: 10px 14px;
-            font-size: 0.95rem; color: white; overflow: hidden;
+            border-radius: 8px; padding: 8px 12px;
+            font-size: 0.9rem; color: white; overflow: hidden;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.2);
             cursor: pointer; z-index: 10; opacity: 0.95; transition: all 0.2s ease;
             border-left: 5px solid rgba(0,0,0,0.2); box-sizing: border-box;
-            /* 確保字不會跑出去 */
             white-space: nowrap; text-overflow: ellipsis; 
         }
         .timeline-event:hover { z-index: 20; transform: scale(1.02); box-shadow: 0 8px 16px rgba(0,0,0,0.15); opacity: 1;}
@@ -187,7 +177,9 @@
 <script>
     // ================== 設定區 ==================
     const SHEET_ID = '1N4Yj5JTKoeX4cbe4lexap2muaKtTpMwcqPOUjTpbN1Q'; 
-    const GID = '0#gid=0'; // 你的 Database 分頁 ID
+    
+    // 【修改 4】GID 修正：請填入純數字，不要有 #gid=
+    const GID = '0#gid=0'; 
     
     const COLOR_MAP = {
         '紅色': '#E74C3C', '藍色': '#3498DB', '綠色': '#2ECC71',
@@ -196,7 +188,7 @@
     };
     // ===========================================
 
-    let allEvents = [];
+    let allTimelineEvents = []; // 儲存所有完整資料 (給時間軸用)
     let calendar;
     let selectedDateEl = null;
 
@@ -214,8 +206,7 @@
             height: '100%',
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
             selectable: true,
-            // 【修改 1】隱藏月曆上的時間，只顯示標題
-            displayEventTime: false, 
+            displayEventTime: false, // 不顯示時間
             
             dateClick: function(info) {
                 handleDateSelection(info.dayEl);
@@ -252,7 +243,6 @@
     }
 
     async function fetchData() {
-        // 加入時間戳記避免快取
         const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&tq=Select%20*&gid=${GID}&_=${new Date().getTime()}`;
         
         try {
@@ -270,41 +260,42 @@
         }
     }
 
-    // 【修改 3】增強版時間解析 (解決 Date(...,6,0,0) 格式問題)
     function normalizeGoogleTime(rawTime) {
         if (!rawTime) return null;
         const str = rawTime.toString();
-        
-        // 針對 Google Sheet 傳回的格式解析 (年,月,日,時,分,秒)
-        // Regex 忽略前三個參數，抓取第 4, 5 個參數 (時, 分)
         const match = str.match(/Date\(.*?,.*?,.*?,(\d+),(\d+)/);
-        
         if (match) {
             let h = match[1].padStart(2, '0');
             let m = match[2].padStart(2, '0');
             return `${h}:${m}`;
         }
-        
-        // Fallback: 如果原本就是字串 "09:00"
         if (str.includes(':') && str.length <= 5) return str;
-
         return null;
     }
 
     function processData(rows) {
-        allEvents = rows.map(row => {
-            const title = (row.c[1]?.v) || '未命名';
+        let rawEvents = [];
+
+        // 1. 先處理原始資料
+        rows.forEach(row => {
+            const name = (row.c[1]?.v) || '未命名'; // 姓名
+            const eventName = (row.c[7]?.v) || ''; // 事件名稱 (對應你的表單結構)
             const dateStart = (row.c[2]?.f) || (row.c[2]?.v);
             const timeStart = normalizeGoogleTime(row.c[4]?.v) || '00:00';
             const timeEnd = normalizeGoogleTime(row.c[5]?.v) || '23:59';
             const colorName = (row.c[6]?.v) || 'default';
 
-            if (!dateStart) return null;
+            if (!dateStart) return;
 
-            return {
-                title: title,
+            // 組合完整的標題供時間軸顯示 (例如：吐司 - 上班)
+            // 如果事件名稱跟姓名一樣，就不重複顯示
+            const fullTitle = eventName && eventName !== name ? `${name} - ${eventName}` : name;
+
+            const eventObj = {
+                title: fullTitle, // 時間軸顯示完整資訊
+                name: name,       // 【關鍵】只存名字，給月曆過濾用
                 start: `${dateStart}T${timeStart}`,
-                end: `${dateStart}T${timeEnd}`, // 用於計算，但月曆顯示會忽略時間
+                end: `${dateStart}T${timeEnd}`,
                 color: COLOR_MAP[colorName] || COLOR_MAP['default'],
                 extendedProps: {
                     dateOnly: dateStart,
@@ -313,10 +304,36 @@
                     desc: `${timeStart} - ${timeEnd}`
                 }
             };
-        }).filter(e => e !== null);
+            rawEvents.push(eventObj);
+        });
 
+        // 2. 儲存所有詳細資料給時間軸使用
+        allTimelineEvents = rawEvents;
+
+        // 3. 【修改 5】製作給月曆用的「去重複」資料
+        // 使用 Map 來過濾：Key = 日期 + 姓名
+        // 這樣同一天、同一人，不管有幾班，只會被加進去一次
+        let calendarUniqueMap = new Map();
+
+        rawEvents.forEach(event => {
+            const uniqueKey = `${event.extendedProps.dateOnly}-${event.name}`;
+            
+            if (!calendarUniqueMap.has(uniqueKey)) {
+                calendarUniqueMap.set(uniqueKey, {
+                    title: event.name, // 【修改 6】月曆上只顯示名字，不顯示事件
+                    start: event.extendedProps.dateOnly, // 全天事件
+                    color: event.color,
+                    allDay: true
+                });
+            }
+        });
+
+        // 將 Map 轉回陣列
+        const calendarEvents = Array.from(calendarUniqueMap.values());
+
+        // 4. 渲染月曆
         calendar.removeAllEvents();
-        calendar.addEventSource(allEvents);
+        calendar.addEventSource(calendarEvents);
     }
 
     function openTimeline(dateStr) {
@@ -327,13 +344,14 @@
 
         dateTitle.textContent = `${dateStr}`;
         container.classList.add('sidebar-active');
-        body.classList.add('sidebar-open'); // 用於觸發 Header 變寬
+        body.classList.add('sidebar-open');
 
         setTimeout(() => { calendar.updateSize(); }, 400);
 
         grid.querySelectorAll('.timeline-event').forEach(el => el.remove());
 
-        const dayEvents = allEvents
+        // 使用「詳細版」的資料來渲染時間軸
+        const dayEvents = allTimelineEvents
             .filter(e => e.extendedProps.dateOnly === dateStr)
             .sort((a, b) => a.extendedProps.timeStart.localeCompare(b.extendedProps.timeStart));
 
@@ -368,11 +386,9 @@
             endMin: getMinutes(e.extendedProps.timeEnd)
         }));
 
-        // 分組邏輯
         let groups = [];
         if (processedEvents.length > 0) {
             let currentGroup = [processedEvents[0]];
-            // 處理跨日結束時間 (如果結束比開始小，代表跨到隔天，加 24小時)
             let firstEnd = processedEvents[0].endMin < processedEvents[0].startMin ? processedEvents[0].endMin + 1440 : processedEvents[0].endMin;
             let maxEndTimeInGroup = firstEnd;
 
@@ -393,17 +409,18 @@
         }
 
         const HOUR_HEIGHT = 60;
+        // 修正：加上 padding-top 的偏移量 (20px)
+        // 因為我們在 .timeline-scroll-area 加了 20px padding，所以絕對定位的 top 也要加 20
+        const TOP_OFFSET = 20; 
         
         groups.forEach(group => {
             const count = group.length;
             const width = 100 / count;
 
             group.forEach((event, index) => {
-                const top = (event.startMin / 60) * HOUR_HEIGHT;
+                const top = (event.startMin / 60) * HOUR_HEIGHT + TOP_OFFSET;
                 
-                // 【修改 3】計算高度修正 (包含跨日處理)
                 let diff = (event.endMin < event.startMin ? event.endMin + 1440 : event.endMin) - event.startMin;
-                // 防呆：如果計算出 0 或負數，給預設 30 分鐘
                 if (diff <= 0) diff = 30; 
                 
                 const height = (diff / 60) * HOUR_HEIGHT;
@@ -414,9 +431,11 @@
                 el.style.top = `${top}px`;
                 el.style.height = `${height}px`;
                 el.style.backgroundColor = event.color;
-                // 寬度減一點點做間隔
-                el.style.width = `calc(${width}% - 4px)`; 
-                el.style.left = `calc(60px + ${left}%)`;
+                
+                // 【修改 7】色塊變瘦：增加更多間距
+                // 原本減 4px，現在減 12px，並加上 padding 讓左右留白
+                el.style.width = `calc(${width}% - 12px)`; 
+                el.style.left = `calc(60px + ${left}% + 6px)`; // 左邊也推一點
 
                 el.innerHTML = `
                     <strong>${event.title}</strong>
