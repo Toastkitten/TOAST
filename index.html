@@ -22,20 +22,20 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             min-height: 100vh;
             box-sizing: border-box;
+            /* 修正手機滑動體驗，防止整個頁面被拉動 */
             overflow-y: auto;
             overscroll-behavior-y: none;
         }
 
-        /* 標題列：跟隨主容器寬度 */
+        /* 標題列 */
         .header-bar {
-            width: 100%; max-width: var(--calendar-width); /* 預設寬度 */
+            width: 100%; max-width: var(--calendar-width);
             margin: 0 auto 15px auto;
             height: 50px; display: flex; justify-content: space-between; align-items: center;
             transition: max-width var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         
-        /* 展開時，標題列也跟著變寬 */
-        .layout-container.sidebar-active ~ .header-bar, /* CSS選取不到前面的兄弟，這裡用 JS 控制 class */
+        .layout-container.sidebar-active ~ .header-bar,
         body.sidebar-open .header-bar {
             max-width: calc(var(--calendar-width) + var(--sidebar-width));
         }
@@ -50,41 +50,29 @@
         }
         .btn-add:hover { background-color: #1557b0; transform: translateY(-1px); }
 
-        /* ================= 核心佈局 (修正擠壓問題) ================= */
-        
-        /* 主容器 */
+        /* ================= 核心佈局 ================= */
         .layout-container {
             display: flex;
             position: relative;
-            
-            /* 預設狀態：寬度 = 行事曆寬度 */
             width: 100%; 
             max-width: var(--calendar-width);
-            
             height: 85vh; min-height: 600px;
-            margin: 0 auto 40px auto; /* 左右置中 */
-            
+            margin: 0 auto 40px auto;
             background: white;
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            overflow: hidden;
+            overflow: hidden; /* 這裡會裁切超出的部分，所以內層必須能滾動 */
             border: 1px solid #e0e0e0;
-            
-            /* 關鍵動畫：寬度變化 */
             transition: max-width var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
-        /* 展開狀態：寬度 = 行事曆 + 時間軸 */
         .layout-container.sidebar-active {
             max-width: calc(var(--calendar-width) + var(--sidebar-width));
         }
 
-        /* 左側：行事曆區塊 */
         .calendar-wrapper {
-            /* 【關鍵修改】鎖死寬度，禁止縮小 (flex-shrink: 0) */
             flex: 0 0 var(--calendar-width);
             width: var(--calendar-width);
-            
             padding: 20px 30px;
             box-sizing: border-box;
             background: #fff;
@@ -92,86 +80,61 @@
 
         /* 右側：時間軸區塊 */
         .timeline-wrapper {
-            /* 固定寬度 */
             width: var(--sidebar-width);
             background: #fff;
             border-left: 1px solid #eee;
             
-            /* 預設藏在右邊 */
+            /* 讓它可以滑動 */
             transform: translateX(100%);
-            margin-right: calc(var(--sidebar-width) * -1); /* 讓它不佔據空間 */
+            margin-right: calc(var(--sidebar-width) * -1);
             opacity: 0;
+            
+            /* 確保高度填滿，並使用 Flex 排版 */
+            height: 100%;
+            display: flex;
+            flex-direction: column;
             
             transition: transform var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1),
                         margin-right var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1),
                         opacity var(--transition-speed) ease;
         }
 
-        /* 展開時 */
         .layout-container.sidebar-active .timeline-wrapper {
             transform: translateX(0);
-            margin-right: 0; /* 回歸正常佔位 */
+            margin-right: 0;
             opacity: 1;
         }
 
-
-        /* ================= RWD 響應式處理 ================= */
-
-        /* 1. 筆電/平板 (寬度不足 1600px 時) */
-        /* 為了解決 "螢幕不夠寬無法展開" 的問題，改用覆蓋模式，但不擠壓行事曆 */
+        /* ================= RWD 響應式 ================= */
         @media screen and (max-width: 1650px) {
-            .layout-container {
-                max-width: 100% !important; /* 佔滿可用空間 */
-                width: 96% !important;
-            }
-            
-            .layout-container.sidebar-active {
-                max-width: 100% !important;
-                width: 96% !important;
-            }
+            .layout-container { max-width: 100% !important; width: 96% !important; }
+            .layout-container.sidebar-active { max-width: 100% !important; width: 96% !important; }
+            .calendar-wrapper { width: 100%; flex: 1; }
 
-            .calendar-wrapper {
-                width: 100%; /* 行事曆填滿容器 */
-                flex: 1;
-            }
-
-            /* 強制轉為「覆蓋模式 (Overlay)」 */
             .timeline-wrapper {
                 position: absolute;
                 top: 0; right: 0; bottom: 0;
-                margin-right: 0 !important; /* 取消 margin 佔位 */
+                margin-right: 0 !important;
                 transform: translateX(100%);
                 z-index: 50;
                 box-shadow: -5px 0 20px rgba(0,0,0,0.1);
             }
-            
-            .layout-container.sidebar-active .timeline-wrapper {
-                transform: translateX(0);
-            }
+            .layout-container.sidebar-active .timeline-wrapper { transform: translateX(0); }
         }
 
-        /* 2. 手機版 (< 768px) */
         @media screen and (max-width: 768px) {
             :root { --sidebar-width: 100%; }
             body { padding: 10px; }
             .header-bar { width: 100% !important; }
             .layout-container { height: calc(100vh - 80px); flex-direction: column; }
             .calendar-wrapper { padding: 10px; }
-            
-            .timeline-wrapper {
-                width: 100% !important;
-                border-left: none;
-                z-index: 100;
-            }
-
-            /* FullCalendar 手機微調 */
+            .timeline-wrapper { width: 100% !important; border-left: none; z-index: 100; }
             .fc-toolbar { flex-wrap: wrap; gap: 8px; margin-bottom: 1em !important; }
             .fc-toolbar-title { font-size: 1.2rem !important; }
             .fc-button { padding: 0.4em 0.65em !important; font-size: 0.85em !important; }
         }
 
-
-        /* ================= 元件樣式 ================= */
+        /* ================= 時間軸內部樣式 (修復滾動) ================= */
         .timeline-header {
             padding: 0 20px; background: #fafafa; border-bottom: 1px solid #eee;
             font-weight: bold; display: flex; justify-content: space-between; align-items: center;
@@ -184,9 +147,17 @@
         }
         .close-btn:hover { background: #e0e0e0; color: #333; }
 
+        /* 這裡是最重要的修正區域 */
         .timeline-scroll-area { 
-            flex: 1; overflow-y: auto; overflow-x: hidden;
-            position: relative; background: #fff; padding: 20px 0; 
+            flex: 1; 
+            /* 【關鍵修復】防止內容撐大容器導致無法滾動 */
+            min-height: 0; 
+            
+            overflow-y: auto; 
+            overflow-x: hidden;
+            position: relative; 
+            background: #fff; 
+            padding: 20px 0; /* 保持上下間距 */
         }
 
         .time-slot {
