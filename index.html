@@ -2,58 +2,228 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>共同班表</title>
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     
     <style>
+        /* ================= 全域變數 ================= */
         :root {
             --bg-color: #f0f2f5;
-            --sidebar-width: 500px;
-            --calendar-min-width: 1500px; 
-            --transition-speed: 0.4s;
             --primary-color: #1a73e8;
+            --calendar-width: 1100px; /* 行事曆固定寬度 */
+            --sidebar-width: 500px;   /* 時間軸固定寬度 */
+            --transition-speed: 0.35s;
         }
-        body { margin: 0; padding: 20px; background-color: var(--bg-color); font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; min-height: 100vh; box-sizing: border-box; overflow-y: auto; }
+
+        body {
+            margin: 0; padding: 20px;
+            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            box-sizing: border-box;
+            overflow-y: auto;
+            overscroll-behavior-y: none;
+        }
+
+        /* 標題列：跟隨主容器寬度 */
+        .header-bar {
+            width: 100%; max-width: var(--calendar-width); /* 預設寬度 */
+            margin: 0 auto 15px auto;
+            height: 50px; display: flex; justify-content: space-between; align-items: center;
+            transition: max-width var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
         
-        .header-bar { width: var(--calendar-min-width); margin: 0 auto 20px auto; height: 50px; display: flex; justify-content: space-between; align-items: center; transition: width var(--transition-speed) ease; }
-        body.sidebar-open .header-bar { width: calc(var(--calendar-min-width) + var(--sidebar-width)); }
-        h1 { font-size: 1.6rem; color: #333; margin: 0; font-weight: 700;}
-        .btn-add { background-color: var(--primary-color); color: white; padding: 10px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: 0.2s; }
+        /* 展開時，標題列也跟著變寬 */
+        .layout-container.sidebar-active ~ .header-bar, /* CSS選取不到前面的兄弟，這裡用 JS 控制 class */
+        body.sidebar-open .header-bar {
+            max-width: calc(var(--calendar-width) + var(--sidebar-width));
+        }
+
+        h1 { font-size: 1.5rem; color: #333; margin: 0; font-weight: 700; display: flex; align-items: center; gap: 8px;}
+        h1::before { content: ''; display: block; width: 6px; height: 24px; background: var(--primary-color); border-radius: 3px; }
+
+        .btn-add {
+            background-color: var(--primary-color); color: white; padding: 8px 20px;
+            text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.95rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: 0.2s; white-space: nowrap;
+        }
         .btn-add:hover { background-color: #1557b0; transform: translateY(-1px); }
 
-        .layout-container { display: flex; width: var(--calendar-min-width); margin: 0 auto 60px auto; height: 85vh; min-height: 700px; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; position: relative; border: 1px solid #e0e0e0; transition: width var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1); }
-        .layout-container.sidebar-active { width: calc(var(--calendar-min-width) + var(--sidebar-width)); }
+        /* ================= 核心佈局 (修正擠壓問題) ================= */
+        
+        /* 主容器 */
+        .layout-container {
+            display: flex;
+            position: relative;
+            
+            /* 預設狀態：寬度 = 行事曆寬度 */
+            width: 100%; 
+            max-width: var(--calendar-width);
+            
+            height: 85vh; min-height: 600px;
+            margin: 0 auto 40px auto; /* 左右置中 */
+            
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+            
+            /* 關鍵動畫：寬度變化 */
+            transition: max-width var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
 
-        .calendar-wrapper { flex: 0 0 var(--calendar-min-width); width: var(--calendar-min-width); padding: 30px; box-sizing: border-box; background: #fff; z-index: 5; }
-        .fc-toolbar-title { font-size: 1.5rem !important; font-weight: 600; }
-        .fc-button { border-radius: 6px !important; font-weight: 500; }
-        .fc-daygrid-event { border-radius: 4px; font-size: 0.9em; padding: 2px 6px; margin-top: 2px; font-weight: 500; border: none; }
-        .fc-day-selected { background-color: rgba(26, 115, 232, 0.08) !important; transition: 0.2s;} 
+        /* 展開狀態：寬度 = 行事曆 + 時間軸 */
+        .layout-container.sidebar-active {
+            max-width: calc(var(--calendar-width) + var(--sidebar-width));
+        }
 
-        .timeline-wrapper { width: 0; opacity: 0; background-color: #fff; border-left: 1px solid #eee; display: flex; flex-direction: column; position: relative; z-index: 10; overflow: hidden; transition: width var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1), opacity var(--transition-speed) ease; }
-        .layout-container.sidebar-active .timeline-wrapper { width: var(--sidebar-width); opacity: 1; }
+        /* 左側：行事曆區塊 */
+        .calendar-wrapper {
+            /* 【關鍵修改】鎖死寬度，禁止縮小 (flex-shrink: 0) */
+            flex: 0 0 var(--calendar-width);
+            width: var(--calendar-width);
+            
+            padding: 20px 30px;
+            box-sizing: border-box;
+            background: #fff;
+        }
 
-        .timeline-header { padding: 0 25px; background: #fafafa; border-bottom: 1px solid #eee; font-weight: bold; display: flex; justify-content: space-between; align-items: center; height: 70px; flex-shrink: 0; font-size: 1.2rem; color: #444; box-shadow: 0 2px 5px rgba(0,0,0,0.03); z-index: 20; }
-        .close-btn { cursor: pointer; color: #999; padding: 10px; font-size: 1.5rem; line-height: 1; border-radius: 50%;}
+        /* 右側：時間軸區塊 */
+        .timeline-wrapper {
+            /* 固定寬度 */
+            width: var(--sidebar-width);
+            background: #fff;
+            border-left: 1px solid #eee;
+            
+            /* 預設藏在右邊 */
+            transform: translateX(100%);
+            margin-right: calc(var(--sidebar-width) * -1); /* 讓它不佔據空間 */
+            opacity: 0;
+            
+            transition: transform var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1),
+                        margin-right var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1),
+                        opacity var(--transition-speed) ease;
+        }
+
+        /* 展開時 */
+        .layout-container.sidebar-active .timeline-wrapper {
+            transform: translateX(0);
+            margin-right: 0; /* 回歸正常佔位 */
+            opacity: 1;
+        }
+
+
+        /* ================= RWD 響應式處理 ================= */
+
+        /* 1. 筆電/平板 (寬度不足 1600px 時) */
+        /* 為了解決 "螢幕不夠寬無法展開" 的問題，改用覆蓋模式，但不擠壓行事曆 */
+        @media screen and (max-width: 1650px) {
+            .layout-container {
+                max-width: 100% !important; /* 佔滿可用空間 */
+                width: 96% !important;
+            }
+            
+            .layout-container.sidebar-active {
+                max-width: 100% !important;
+                width: 96% !important;
+            }
+
+            .calendar-wrapper {
+                width: 100%; /* 行事曆填滿容器 */
+                flex: 1;
+            }
+
+            /* 強制轉為「覆蓋模式 (Overlay)」 */
+            .timeline-wrapper {
+                position: absolute;
+                top: 0; right: 0; bottom: 0;
+                margin-right: 0 !important; /* 取消 margin 佔位 */
+                transform: translateX(100%);
+                z-index: 50;
+                box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+            }
+            
+            .layout-container.sidebar-active .timeline-wrapper {
+                transform: translateX(0);
+            }
+        }
+
+        /* 2. 手機版 (< 768px) */
+        @media screen and (max-width: 768px) {
+            :root { --sidebar-width: 100%; }
+            body { padding: 10px; }
+            .header-bar { width: 100% !important; }
+            .layout-container { height: calc(100vh - 80px); flex-direction: column; }
+            .calendar-wrapper { padding: 10px; }
+            
+            .timeline-wrapper {
+                width: 100% !important;
+                border-left: none;
+                z-index: 100;
+            }
+
+            /* FullCalendar 手機微調 */
+            .fc-toolbar { flex-wrap: wrap; gap: 8px; margin-bottom: 1em !important; }
+            .fc-toolbar-title { font-size: 1.2rem !important; }
+            .fc-button { padding: 0.4em 0.65em !important; font-size: 0.85em !important; }
+        }
+
+
+        /* ================= 元件樣式 ================= */
+        .timeline-header {
+            padding: 0 20px; background: #fafafa; border-bottom: 1px solid #eee;
+            font-weight: bold; display: flex; justify-content: space-between; align-items: center;
+            height: 60px; flex-shrink: 0; font-size: 1.1rem; color: #444;
+        }
+        .close-btn { 
+            cursor: pointer; color: #888; width: 36px; height: 36px; 
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; line-height: 1; border-radius: 50%; transition: 0.2s;
+        }
         .close-btn:hover { background: #e0e0e0; color: #333; }
 
-        .timeline-scroll-area { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; background: #fff; padding: 20px 0; }
-        .time-slot { height: 60px; border-bottom: 1px solid #f9f9f9; position: relative; box-sizing: border-box; }
-        .time-slot span { position: absolute; top: -10px; left: 15px; background: #fff; padding: 0 5px; color: #bbb; font-size: 0.8rem; font-family: monospace; }
-        .time-slot::after { content: ''; position: absolute; top: 30px; left: 60px; right: 0; border-bottom: 1px dashed #fcfcfc; height: 0; }
+        .timeline-scroll-area { 
+            flex: 1; overflow-y: auto; overflow-x: hidden;
+            position: relative; background: #fff; padding: 20px 0; 
+        }
 
-        .timeline-event { position: absolute; border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; color: white; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.2); cursor: pointer; z-index: 10; opacity: 0.95; transition: all 0.2s ease; border-left: 5px solid rgba(0,0,0,0.2); box-sizing: border-box; white-space: nowrap; text-overflow: ellipsis; }
+        .time-slot {
+            height: 60px; border-bottom: 1px solid #f9f9f9; position: relative; box-sizing: border-box;
+        }
+        .time-slot span {
+            position: absolute; top: -10px; left: 10px; background: #fff; padding: 0 5px;
+            color: #bbb; font-size: 0.75rem; font-family: monospace;
+        }
+        .time-slot::after {
+             content: ''; position: absolute; top: 30px; left: 50px; right: 0;
+             border-bottom: 1px dashed #fcfcfc; height: 0;
+        }
+
+        .timeline-event {
+            position: absolute; border-radius: 6px; padding: 8px 10px;
+            font-size: 0.9rem; color: white; overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.2);
+            cursor: pointer; z-index: 10; opacity: 0.95; transition: all 0.2s ease;
+            border-left: 4px solid rgba(0,0,0,0.2); box-sizing: border-box;
+            white-space: nowrap; text-overflow: ellipsis; 
+        }
         .timeline-event:hover { z-index: 20; transform: scale(1.02); box-shadow: 0 8px 16px rgba(0,0,0,0.15); opacity: 1;}
-        .timeline-event strong { font-size: 1rem; display: block; margin-bottom: 2px; }
-        .event-time-label { font-size: 0.8em; opacity: 0.9; display: block;}
+        .timeline-event strong { font-size: 0.95rem; display: block; margin-bottom: 2px; }
+        .event-time-label { font-size: 0.75em; opacity: 0.9; display: block;}
+        
+        .fc-daygrid-event { border-radius: 3px; font-size: 0.85em; padding: 1px 4px; margin-top: 2px; font-weight: 500; border: none; cursor: pointer;}
+        .fc-day-selected { background-color: rgba(26, 115, 232, 0.08) !important; transition: 0.2s;} 
+        .fc-col-header-cell-cushion { padding: 8px 0; color: #666; font-weight: 600; }
+        .fc-daygrid-day-number { color: #555; padding: 8px; }
     </style>
 </head>
 <body>
 
     <div class="header-bar">
         <h1>共同班表</h1>
-        <a href="https://forms.gle/ZMxuuTAANsgGDKZ38" target="_blank" class="btn-add">➕ 新增/填寫班表</a>
+        <a href="https://forms.gle/ZMxuuTAANsgGDKZ38" target="_blank" class="btn-add">➕ 新增班表</a>
     </div>
 
     <div class="layout-container" id="layoutContainer">
@@ -72,7 +242,6 @@
 
 <script>
     const SHEET_ID = '1N4Yj5JTKoeX4cbe4lexap2muaKtTpMwcqPOUjTpbN1Q'; 
-    // 【修正】這裡直接填 0 即可，API 會懂的
     const GID = '0'; 
     
     const COLOR_MAP = {
@@ -96,7 +265,10 @@
             locale: 'zh-tw',
             initialView: 'dayGridMonth',
             height: '100%',
-            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
+            windowResize: function(view) {
+                if (window.innerWidth < 768) { calendar.changeView('dayGridMonth'); }
+            },
+            headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
             selectable: true,
             displayEventTime: false, 
             dateClick: function(info) { handleDateSelection(info.dayEl); openTimeline(info.dateStr); },
@@ -128,7 +300,6 @@
     }
 
     async function fetchData() {
-        // 使用 GID=0 (如果你的 Database 是第一頁)
         const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&tq=Select%20*&gid=${GID}&_=${new Date().getTime()}`;
         try {
             const res = await fetch(url);
@@ -143,11 +314,9 @@
         } catch (err) { console.error('讀取錯誤:', err); }
     }
 
-    // 時間正規化 (支援 09:00 或 Date(y,m,d,h,m,s))
     function normalizeGoogleTime(rawTime) {
         if (!rawTime) return null;
         const str = rawTime.toString();
-        // 修正 Regex，確保能抓到小時和分鐘
         const match = str.match(/Date\(.*?,.*?,.*?,(\d+),(\d+)/);
         if (match) {
             let h = match[1].padStart(2, '0');
@@ -155,7 +324,6 @@
             return `${h}:${m}`;
         }
         if (str.includes(':')) {
-             // 如果是 "09:00" 這種格式
              let parts = str.split(':');
              return `${parts[0].padStart(2,'0')}:${parts[1].padStart(2,'0')}`;
         }
@@ -164,30 +332,21 @@
 
     function processData(rows) {
         let rawEvents = [];
-        // 【修正】對應新的 Database 欄位結構：
-        // Col 0: Timestamp
-        // Col 1: Name (名字)
-        // Col 2: Event (事件)
-        // Col 3: Date_Start
-        // ...
         rows.forEach(row => {
             const name = (row.c[1]?.v) || '未命名'; 
             const eventName = (row.c[2]?.v) || ''; 
             const dateStart = (row.c[3]?.f) || (row.c[3]?.v);
-            
-            // 時間欄位往後移了
             const timeStart = normalizeGoogleTime(row.c[5]?.v) || '00:00';
             const timeEnd = normalizeGoogleTime(row.c[6]?.v) || '23:59';
             const colorName = (row.c[7]?.v) || 'default';
 
             if (!dateStart) return;
 
-            // 時間軸顯示：名字 - 事件
             const fullTitle = eventName && eventName !== name ? `${name} - ${eventName}` : name;
 
             const eventObj = {
                 title: fullTitle, 
-                name: name,       // 單純的名字 (給行事曆用)
+                name: name,
                 start: `${dateStart}T${timeStart}`,
                 end: `${dateStart}T${timeEnd}`,
                 color: COLOR_MAP[colorName] || COLOR_MAP['default'],
@@ -203,13 +362,12 @@
 
         allTimelineEvents = rawEvents;
 
-        // 【關鍵邏輯】行事曆去重複：同一天、同一人，只顯示一次名字
         let calendarUniqueMap = new Map();
         rawEvents.forEach(event => {
             const uniqueKey = `${event.extendedProps.dateOnly}-${event.name}`;
             if (!calendarUniqueMap.has(uniqueKey)) {
                 calendarUniqueMap.set(uniqueKey, {
-                    title: event.name, // 只顯示名字！
+                    title: event.name,
                     start: event.extendedProps.dateOnly,
                     color: event.color,
                     allDay: true
@@ -222,16 +380,18 @@
         calendar.addEventSource(calendarEvents);
     }
 
-    // ... (後面的 openTimeline, closeTimeline, renderOverlappingEvents 保持不變，因為已經在上次修好了)
     function openTimeline(dateStr) {
         const container = document.getElementById('layoutContainer');
         const dateTitle = document.getElementById('timeline-date-title');
         const grid = document.getElementById('timeline-grid');
         const body = document.body;
+        
         dateTitle.textContent = `${dateStr}`;
         container.classList.add('sidebar-active');
         body.classList.add('sidebar-open');
-        setTimeout(() => { calendar.updateSize(); }, 400);
+        
+        setTimeout(() => { calendar.updateSize(); }, 350);
+        
         grid.querySelectorAll('.timeline-event').forEach(el => el.remove());
         const dayEvents = allTimelineEvents.filter(e => e.extendedProps.dateOnly === dateStr).sort((a, b) => a.extendedProps.timeStart.localeCompare(b.extendedProps.timeStart));
         renderOverlappingEvents(dayEvents, grid);
@@ -243,7 +403,7 @@
         container.classList.remove('sidebar-active');
         body.classList.remove('sidebar-open');
         if (selectedDateEl) { selectedDateEl.classList.remove('fc-day-selected'); selectedDateEl = null; }
-        setTimeout(() => { calendar.updateSize(); }, 400);
+        setTimeout(() => { calendar.updateSize(); }, 350);
     }
 
     function renderOverlappingEvents(events, container) {
@@ -280,7 +440,7 @@
                 el.style.height = `${height}px`;
                 el.style.backgroundColor = event.color;
                 el.style.width = `calc(${width}% - 12px)`; 
-                el.style.left = `calc(60px + ${left}% + 6px)`; 
+                el.style.left = `calc(50px + ${left}% + 6px)`; 
                 el.innerHTML = `<strong>${event.title}</strong><span class="event-time-label">${event.extendedProps.desc}</span>`;
                 el.onclick = (e) => { e.stopPropagation(); alert(`${event.title}\n時間：${event.extendedProps.desc}`); };
                 container.appendChild(el);
