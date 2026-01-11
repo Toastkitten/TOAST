@@ -12,7 +12,7 @@
             --bg-color: #f0f2f5;
             --primary-color: #1a73e8;
             --calendar-width: 1100px; /* 行事曆固定寬度 */
-            --sidebar-width: 500px;   /* 時間軸固定寬度 */
+            --sidebar-width: 450px;   /* 時間軸固定寬度 */
             --transition-speed: 0.35s;
         }
 
@@ -22,12 +22,10 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             min-height: 100vh;
             box-sizing: border-box;
-            /* 修正手機滑動體驗，防止整個頁面被拉動 */
             overflow-y: auto;
             overscroll-behavior-y: none;
         }
 
-        /* 標題列 */
         .header-bar {
             width: 100%; max-width: var(--calendar-width);
             margin: 0 auto 15px auto;
@@ -61,7 +59,7 @@
             background: white;
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            overflow: hidden; /* 這裡會裁切超出的部分，所以內層必須能滾動 */
+            overflow: hidden; 
             border: 1px solid #e0e0e0;
             transition: max-width var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1);
         }
@@ -83,17 +81,12 @@
             width: var(--sidebar-width);
             background: #fff;
             border-left: 1px solid #eee;
-            
-            /* 讓它可以滑動 */
             transform: translateX(100%);
             margin-right: calc(var(--sidebar-width) * -1);
             opacity: 0;
-            
-            /* 確保高度填滿，並使用 Flex 排版 */
             height: 100%;
             display: flex;
             flex-direction: column;
-            
             transition: transform var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1),
                         margin-right var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1),
                         opacity var(--transition-speed) ease;
@@ -105,18 +98,15 @@
             opacity: 1;
         }
 
-        /* ================= RWD 響應式 ================= */
+        /* ================= RWD ================= */
         @media screen and (max-width: 1650px) {
             .layout-container { max-width: 100% !important; width: 96% !important; }
             .layout-container.sidebar-active { max-width: 100% !important; width: 96% !important; }
             .calendar-wrapper { width: 100%; flex: 1; }
-
             .timeline-wrapper {
-                position: absolute;
-                top: 0; right: 0; bottom: 0;
+                position: absolute; top: 0; right: 0; bottom: 0;
                 margin-right: 0 !important;
-                transform: translateX(100%);
-                z-index: 50;
+                transform: translateX(100%); z-index: 50;
                 box-shadow: -5px 0 20px rgba(0,0,0,0.1);
             }
             .layout-container.sidebar-active .timeline-wrapper { transform: translateX(0); }
@@ -134,7 +124,7 @@
             .fc-button { padding: 0.4em 0.65em !important; font-size: 0.85em !important; }
         }
 
-        /* ================= 時間軸內部樣式 (修復滾動) ================= */
+        /* ================= 時間軸內部樣式 ================= */
         .timeline-header {
             padding: 0 20px; background: #fafafa; border-bottom: 1px solid #eee;
             font-weight: bold; display: flex; justify-content: space-between; align-items: center;
@@ -147,17 +137,14 @@
         }
         .close-btn:hover { background: #e0e0e0; color: #333; }
 
-        /* 這裡是最重要的修正區域 */
         .timeline-scroll-area { 
             flex: 1; 
-            /* 【關鍵修復】防止內容撐大容器導致無法滾動 */
-            min-height: 0; 
-            
+            min-height: 0;
             overflow-y: auto; 
-            overflow-x: hidden;
+            overflow-x: hidden; /* 禁止水平捲軸 */
             position: relative; 
             background: #fff; 
-            padding: 20px 0; /* 保持上下間距 */
+            padding: 20px 0; 
         }
 
         .time-slot {
@@ -167,8 +154,9 @@
             position: absolute; top: -10px; left: 10px; background: #fff; padding: 0 5px;
             color: #bbb; font-size: 0.75rem; font-family: monospace;
         }
+        /* 虛線起始點設為 60px (配合 LEFT_OFFSET) */
         .time-slot::after {
-             content: ''; position: absolute; top: 30px; left: 50px; right: 0;
+             content: ''; position: absolute; top: 30px; left: 60px; right: 0;
              border-bottom: 1px dashed #fcfcfc; height: 0;
         }
 
@@ -179,6 +167,9 @@
             cursor: pointer; z-index: 10; opacity: 0.95; transition: all 0.2s ease;
             border-left: 4px solid rgba(0,0,0,0.2); box-sizing: border-box;
             white-space: nowrap; text-overflow: ellipsis; 
+            
+            /* 讓色塊保持瘦瘦的 */
+            max-width: 110px; 
         }
         .timeline-event:hover { z-index: 20; transform: scale(1.02); box-shadow: 0 8px 16px rgba(0,0,0,0.15); opacity: 1;}
         .timeline-event strong { font-size: 0.95rem; display: block; margin-bottom: 2px; }
@@ -271,6 +262,7 @@
     }
 
     async function fetchData() {
+        // 加入時間戳記避免快取
         const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&tq=Select%20*&gid=${GID}&_=${new Date().getTime()}`;
         try {
             const res = await fetch(url);
@@ -303,6 +295,9 @@
 
     function processData(rows) {
         let rawEvents = [];
+        // 【關鍵】建立一個 Set 用來檢查重複 (前端過濾)
+        let uniqueCheck = new Set();
+
         rows.forEach(row => {
             const name = (row.c[1]?.v) || '未命名'; 
             const eventName = (row.c[2]?.v) || ''; 
@@ -312,6 +307,15 @@
             const colorName = (row.c[7]?.v) || 'default';
 
             if (!dateStart) return;
+
+            // 製作這筆資料的「唯一指紋」
+            const signature = `${name}|${dateStart}|${timeStart}|${timeEnd}|${eventName}`;
+
+            // 如果這筆資料已經存在過，就直接跳過 (解決一筆顯示兩筆的問題)
+            if (uniqueCheck.has(signature)) {
+                return; 
+            }
+            uniqueCheck.add(signature); // 加入指紋庫
 
             const fullTitle = eventName && eventName !== name ? `${name} - ${eventName}` : name;
 
@@ -394,24 +398,37 @@
             }
             groups.push(currentGroup);
         }
+        
         const HOUR_HEIGHT = 60; 
         const TOP_OFFSET = 20; 
+
+        // 【版面設定套用】
+        const LEFT_OFFSET = 60;  // 左側文字區
+        const RIGHT_MARGIN = 6;  // 右側留白
+        const GAP = 3;           // 色塊間隙
+
         groups.forEach(group => {
             const count = group.length;
-            const width = 100 / count;
+            
             group.forEach((event, index) => {
                 const top = (event.startMin / 60) * HOUR_HEIGHT + TOP_OFFSET;
                 let diff = (event.endMin < event.startMin ? event.endMin + 1440 : event.endMin) - event.startMin;
                 if (diff <= 0) diff = 30; 
                 const height = (diff / 60) * HOUR_HEIGHT;
-                const left = index * width;
+
+                // 套用你的設定公式
+                const widthCalc = `((100% - ${LEFT_OFFSET}px - ${RIGHT_MARGIN}px) / ${count} - ${GAP}px)`;
+                const leftCalc  = `${LEFT_OFFSET}px + (${index} * (100% - ${LEFT_OFFSET}px - ${RIGHT_MARGIN}px) / ${count})`;
+
                 const el = document.createElement('div');
                 el.className = 'timeline-event';
                 el.style.top = `${top}px`;
                 el.style.height = `${height}px`;
                 el.style.backgroundColor = event.color;
-                el.style.width = `calc(${width}% - 12px)`; 
-                el.style.left = `calc(50px + ${left}% + 6px)`; 
+                
+                el.style.width = `calc(${widthCalc})`; 
+                el.style.left = `calc(${leftCalc})`; 
+                
                 el.innerHTML = `<strong>${event.title}</strong><span class="event-time-label">${event.extendedProps.desc}</span>`;
                 el.onclick = (e) => { e.stopPropagation(); alert(`${event.title}\n時間：${event.extendedProps.desc}`); };
                 container.appendChild(el);
